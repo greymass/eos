@@ -487,12 +487,68 @@ struct controller_impl {
          ilog( "existing block log, attempting to replay from ${s} to ${n} blocks",
                ("s", start_block_num)("n", blog_head->block_num()) );
          try {
-            while( auto next = blog.read_block_by_num( head->block_num + 1 ) ) {
-               replay_push_block( next, controller::block_status::irreversible );
-               if( next->block_num() % 500 == 0 ) {
-                  ilog( "${n} of ${head}", ("n", next->block_num())("head", blog_head->block_num()) );
-                  if( shutdown() ) break;
+            //while( auto next = blog.read_block_by_num( head->block_num + 1 ) ) {
+            //   replay_push_block( next, controller::block_status::irreversible );
+            //   if( next->block_num() % 500 == 0 ) {
+            //      ilog( "${n} of ${head}", ("n", next->block_num())("head", blog_head->block_num()) );
+            //      if( shutdown() ) break;
+            //   }
+            //}
+            bool go = true;
+            int count = 500;
+            std::array<signed_block_ptr, 500> blks;
+            std::array<signed_block_ptr, 500> blks_fut;
+
+            for (int i = 0; i < 500; i++) {
+              auto next = blog.read_block_by_num( head->block_num + 1 + i);
+              if (next) {
+                blks[i] = next;
+              } else {
+                go = false;
+                count = i;
+                break;
+              }
+            }
+            if (!go) {
+              for (int i = 0; i < count; i++) {
+                replay_push_block( (blks[i]), controller::block_status::irreversible );
+              }
+            }
+
+            while( go ) {
+               auto load = fc::time_point::now();
+               auto fillhead = head->block_num + 500;
+               std::future<int> res = async_thread_pool( thread_pool.get_executor(), [&blks_fut, fillhead, t=this]() {
+                 int nextcount = 500;
+                 for (int i = 0; i < 500; i++) {
+                   auto next = t->blog.read_block_by_num(fillhead + 1 + i);
+                   if (next) {
+                     blks_fut[i] = next;
+                   } else {
+                     nextcount = i;
+                     break;
+                   }
+                 }
+                 return nextcount;
+               });
+               auto loaded = fc::time_point::now();
+
+               for (int i = 0; i < count; i++) {
+                 replay_push_block( (blks[i]), controller::block_status::irreversible );
                }
+               auto processed = fc::time_point::now();
+               count = res.get();
+               auto gathered = fc::time_point::now();
+               if (count != 500) {
+                 for (int i = 0; i < count; i++) {
+                   replay_push_block( (blks_fut[i]), controller::block_status::irreversible );
+                 }
+                 go = false;
+               } else {
+                 std::swap(blks, blks_fut);
+                 ilog( "${n} of ${head}, thread launch: ${l} ms, wait: ${g} ms, processing: ${p} ms", ("n", (blks[count-1])->block_num()) ("head", blog_head->block_num()) ("l", (loaded-load).count()/1000) ("g", (processed-gathered).count()/1000) ("p", (processed-loaded).count()/1000));
+               }
+               if( shutdown() ) break;
             }
          } catch(  const database_guard_exception& e ) {
             except_ptr = std::current_exception();
