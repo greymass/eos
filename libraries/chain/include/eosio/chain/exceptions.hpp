@@ -425,9 +425,10 @@ namespace eosio { namespace chain {
                                     3110004, "Missing Net API Plugin" )
       FC_DECLARE_DERIVED_EXCEPTION( missing_chain_plugin_exception,               plugin_exception,
                                     3110005, "Missing Chain Plugin" )
-      FC_DECLARE_DERIVED_EXCEPTION( plugin_config_exception,               plugin_exception,
+      FC_DECLARE_DERIVED_EXCEPTION( plugin_config_exception,                      plugin_exception,
                                     3110006, "Incorrect plugin configuration" )
-
+      FC_DECLARE_DERIVED_EXCEPTION( plugin_range_not_satisfiable,                 plugin_exception,
+                                    3110007, "Range Not Satisfiable" )
 
    FC_DECLARE_DERIVED_EXCEPTION( wallet_exception, chain_exception,
                                  3120000, "Wallet exception" )
