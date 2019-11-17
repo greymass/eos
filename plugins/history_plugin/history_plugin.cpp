@@ -460,23 +460,45 @@ namespace eosio {
         get_actions_result result;
         result.last_irreversible_block = chain.last_irreversible_block_num();
         while( start_itr != end_itr ) {
-           const auto& a = hdb.get<action_history_object, by_action_sequence_num>( start_itr->action_sequence_num );
+           uint64_t action_sequence_num;
+           int32_t account_sequence_num;
+           if (params.pos < 0) {
+             --end_itr;
+             action_sequence_num = end_itr->action_sequence_num;
+             account_sequence_num = end_itr->account_sequence_num;
+           } else {
+             action_sequence_num = start_itr->action_sequence_num;
+             account_sequence_num = start_itr->account_sequence_num;
+             ++start_itr;
+           }
+
+           const auto& a = hdb.get<action_history_object, by_action_sequence_num>( action_sequence_num );
            fc::datastream<const char*> ds( a.packed_action_trace.data(), a.packed_action_trace.size() );
            action_trace t;
            fc::raw::unpack( ds, t );
-           result.actions.emplace_back( ordered_action_result{
-                                 start_itr->action_sequence_num,
-                                 start_itr->account_sequence_num,
-                                 a.block_num, a.block_time,
-                                 chain.to_variant_with_abi(t, abi_serializer_max_time)
-                                 });
+
+           if (params.pos < 0) {
+             result.actions.emplace(result.actions.begin(), ordered_action_result{
+                                   action_sequence_num,
+                                   account_sequence_num,
+                                   a.block_num, a.block_time,
+                                   chain.to_variant_with_abi(t, abi_serializer_max_time)
+                                   });
+           } else {
+             result.actions.emplace_back( ordered_action_result{
+                                   action_sequence_num,
+                                   account_sequence_num,
+                                   a.block_num, a.block_time,
+                                   chain.to_variant_with_abi(t, abi_serializer_max_time)
+                                   });
+           }
+
 
            end_time = fc::time_point::now();
            if( end_time - start_time > fc::microseconds(100000) ) {
               result.time_limit_exceeded_error = true;
               break;
            }
-           ++start_itr;
         }
         return result;
       }
