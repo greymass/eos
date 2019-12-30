@@ -67,6 +67,15 @@ class read_only {
       get_transaction_result get_transaction( const get_transaction_params& )const;
 
 
+      struct get_block_txids_params {
+         uint32_t block_num;
+      };
+      struct get_block_txids_result {
+         vector<transaction_id_type> ids;
+         uint32_t                    last_irreversible_block;
+      };
+      get_block_txids_result get_block_txids(const get_block_txids_params&) const;
+
 
 
       /*
@@ -150,3 +159,6 @@ FC_REFLECT(eosio::history_apis::read_only::get_key_accounts_params, (public_key)
 FC_REFLECT(eosio::history_apis::read_only::get_key_accounts_results, (account_names) )
 FC_REFLECT(eosio::history_apis::read_only::get_controlled_accounts_params, (controlling_account) )
 FC_REFLECT(eosio::history_apis::read_only::get_controlled_accounts_results, (controlled_accounts) )
+
+FC_REFLECT( eosio::history_apis::read_only::get_block_txids_params, (block_num) )
+FC_REFLECT( eosio::history_apis::read_only::get_block_txids_result, (ids)(last_irreversible_block) )

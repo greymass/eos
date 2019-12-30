@@ -623,6 +623,36 @@ namespace eosio {
          return result;
       }
 
+      read_only::get_block_txids_result read_only::get_block_txids(const read_only::get_block_txids_params& params ) const {
+        auto& chain = history->chain_plug->chain();
+
+        auto block_num = params.block_num;
+        get_block_txids_result result;
+        result.last_irreversible_block = chain.last_irreversible_block_num();
+
+        EOS_ASSERT(block_num != 0, chain::plugin_exception, "Asked for invalid block" );
+        EOS_ASSERT(block_num <= chain.head_block_num(), chain::plugin_exception, "Unknown block" );
+
+        auto start_time = fc::time_point::now();
+        auto end_time = start_time;
+
+        auto blk = chain.fetch_block_by_number(block_num);
+        if (blk) {
+          for (const auto& receipt: blk->transactions) {
+            if (receipt.trx.contains<packed_transaction>()) {
+              auto& pt = receipt.trx.get<packed_transaction>();
+              const auto& id = pt.id();
+              result.ids.push_back(id);
+            } else {
+              auto& id = receipt.trx.get<transaction_id_type>();
+              result.ids.push_back(id);
+            }
+          }
+        }
+        return result;
+      }
+
+
       read_only::get_key_accounts_results read_only::get_key_accounts(const get_key_accounts_params& params) const {
          std::set<account_name> accounts;
          const auto& db = history->chain_plug->chain().hidb();
