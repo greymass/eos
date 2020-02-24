@@ -434,7 +434,7 @@ namespace eosio {
       else
          cfg.add_options()
             ("unix-socket-path", bpo::value<string>(),
-             "The filename (relative to data-dir) to create a unix socket for HTTP RPC; set blank to disable.");   
+             "The filename (relative to data-dir) to create a unix socket for HTTP RPC; set blank to disable.");
 #endif
 
       if(current_http_plugin_defaults.default_http_port)
@@ -720,7 +720,7 @@ namespace eosio {
             fc_dlog( logger, "Bad arguments: ${args}", ("args", body) );
          } catch (chain::plugin_range_not_satisfiable& e) {
             error_results results{416, "Range Not Satisfiable", error_results::error_info(e, verbose_http_errors)};
-            cb( 416, fc::json::to_string( results ));
+            cb( 416, fc::json::to_string( results, fc::time_point::now() ));
             //dlog( "Exception Details: ${e}", ("e", e.to_detail_string()));  // For debugging only.
          } catch (fc::exception& e) {
             error_results results{500, "Internal Service Error", error_results::error_info(e, verbose_http_errors)};
