@@ -139,7 +139,7 @@ namespace eosio {
    class history_plugin_impl {
       public:
          bool bypass_filter = false;
-         uint64_t history_per_account = 1000;
+         uint64_t history_per_account = std::numeric_limits<uint64_t>::max();
          std::set<filter_entry> filter_on;
          std::set<filter_entry> filter_out;
          chain_plugin*          chain_plug = nullptr;
