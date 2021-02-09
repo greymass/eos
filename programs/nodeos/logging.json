@@ -15,7 +15,8 @@
             "level": "error",
             "color": "red"
           }
-        ]
+        ],
+        "flush": true
       },
       "enabled": true
     },{
@@ -33,7 +34,8 @@
             "level": "error",
             "color": "red"
           }
-        ]
+        ],
+        "flush": true
       },
       "enabled": true
     },{
@@ -84,6 +86,15 @@
       ]
     },{
       "name": "transaction_tracing",
+      "level": "debug",
+      "enabled": true,
+      "additivity": false,
+      "appenders": [
+        "stderr",
+        "net"
+      ]
+    },{
+      "name": "transaction_failure_tracing",
       "level": "debug",
       "enabled": true,
       "additivity": false,
